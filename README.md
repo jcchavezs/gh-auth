@@ -83,25 +83,6 @@ Passthrough to `gh auth status`.
 gh-auth status
 ```
 
-### `pin-git`
-
-Records the current **global** git identity (name, email and GPG signing
-configuration) into the **current repository's local config**. This keeps the
-repository bound to that account even if you later switch your global account
-with `gh-auth switch`. Must be run inside a git repository.
-
-```bash
-gh-auth pin-git
-```
-
-A typical workflow:
-
-```bash
-gh-auth switch     # pick the account you want globally
-cd my-work-repo
-gh-auth pin-git    # lock this repo to that identity
-```
-
 ## Development
 
 ```bash
