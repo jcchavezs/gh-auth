@@ -6,6 +6,7 @@ package gitauth
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -32,17 +33,17 @@ func commandExists(name string) bool {
 
 // GetCurrentAccount returns the login and email of the currently authenticated
 // GitHub account using the gh CLI.
-func GetCurrentAccount() (Account, error) {
+func GetCurrentAccount(ctx context.Context) (Account, error) {
 	if !commandExists("gh") {
 		return Account{}, ErrGHNotInstalled
 	}
 
-	username, err := ghAPIField("user", ".login")
+	username, err := ghAPIField(ctx, "user", ".login")
 	if err != nil {
 		return Account{}, fmt.Errorf("getting GitHub username: %w", err)
 	}
 
-	email, err := ghAPIField("user", ".email")
+	email, err := ghAPIField(ctx, "user", ".email")
 	if err != nil {
 		// A missing/private email is not fatal; the caller can prompt for it.
 		email = ""
@@ -69,8 +70,8 @@ func normalizeEmail(email string) string {
 }
 
 // ghAPIField runs `gh api <endpoint> --jq <jq>` and returns the trimmed output.
-func ghAPIField(endpoint, jq string) (string, error) {
-	out, err := exec.Command("gh", "api", endpoint, "--jq", jq).Output()
+func ghAPIField(ctx context.Context, endpoint, jq string) (string, error) {
+	out, err := exec.CommandContext(ctx, "gh", "api", endpoint, "--jq", jq).Output()
 	if err != nil {
 		return "", err
 	}
@@ -79,8 +80,8 @@ func ghAPIField(endpoint, jq string) (string, error) {
 
 var gpgKeyWithPrefix = regexp.MustCompile(`^[a-z0-9]+/([A-Fa-f0-9]+)$`)
 
-// CleanGPGKey removes a common algorithm prefix (e.g. "rsa4096/") from a key id.
-func CleanGPGKey(key string) string {
+// cleanGPGKey removes a common algorithm prefix (e.g. "rsa4096/") from a key id.
+func cleanGPGKey(key string) string {
 	if m := gpgKeyWithPrefix.FindStringSubmatch(key); m != nil {
 		return m[1]
 	}
@@ -90,12 +91,12 @@ func CleanGPGKey(key string) string {
 // FindGPGKey looks for a secret GPG key whose uid matches the given email and
 // returns the last 16 characters of its key id (the long key id). It returns an
 // empty string when gpg is unavailable or no matching key is found.
-func FindGPGKey(email string) string {
+func FindGPGKey(ctx context.Context, email string) string {
 	if email == "" || !commandExists("gpg") {
 		return ""
 	}
 
-	out, err := exec.Command("gpg", "--list-secret-keys", "--with-colons").Output()
+	out, err := exec.CommandContext(ctx, "gpg", "--list-secret-keys", "--with-colons").Output()
 	if err != nil {
 		return ""
 	}
@@ -110,9 +111,6 @@ func parseSecretKeyForEmail(colonOutput, email string) string {
 	scanner := bufio.NewScanner(strings.NewReader(colonOutput))
 	for scanner.Scan() {
 		fields := strings.Split(scanner.Text(), ":")
-		if len(fields) == 0 {
-			continue
-		}
 		switch fields[0] {
 		case "sec":
 			if len(fields) > 4 {
@@ -169,11 +167,11 @@ func gitConfigGet(key string) string {
 
 // ListSecretKeys returns a human-readable listing of available secret GPG keys,
 // limited to the sec/uid lines, matching the script's fallback output.
-func ListSecretKeys() string {
+func ListSecretKeys(ctx context.Context) string {
 	if !commandExists("gpg") {
 		return "No GPG keys found"
 	}
-	out, err := exec.Command("gpg", "--list-secret-keys", "--keyid-format", "LONG").Output()
+	out, err := exec.CommandContext(ctx, "gpg", "--list-secret-keys", "--keyid-format", "LONG").Output()
 	if err != nil {
 		return "No GPG keys found"
 	}
@@ -207,7 +205,7 @@ type ConfigResult struct {
 func ConfigureGit(username, email, gpgKey string) (ConfigResult, error) {
 	gpgKey = strings.TrimSpace(gpgKey)
 	if gpgKey != "" {
-		gpgKey = CleanGPGKey(gpgKey)
+		gpgKey = cleanGPGKey(gpgKey)
 	}
 
 	if err := gitConfigSet("user.name", username); err != nil {
@@ -233,11 +231,11 @@ func ConfigureGit(username, email, gpgKey string) (ConfigResult, error) {
 }
 
 // SwitchAccount runs `gh auth switch`, which shows gh's interactive menu.
-func SwitchAccount() error {
+func SwitchAccount(ctx context.Context) error {
 	if !commandExists("gh") {
 		return ErrGHNotInstalled
 	}
-	cmd := exec.Command("gh", "auth", "switch")
+	cmd := exec.CommandContext(ctx, "gh", "auth", "switch")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -245,11 +243,11 @@ func SwitchAccount() error {
 }
 
 // AuthStatus runs `gh auth status`, forwarding its output to the given streams.
-func AuthStatus(stdout, stderr io.Writer) error {
+func AuthStatus(ctx context.Context, stdout, stderr io.Writer) error {
 	if !commandExists("gh") {
 		return ErrGHNotInstalled
 	}
-	cmd := exec.Command("gh", "auth", "status")
+	cmd := exec.CommandContext(ctx, "gh", "auth", "status")
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	return cmd.Run()
@@ -268,7 +266,7 @@ type SignStatus struct {
 
 // GetSignStatus gathers the current GitHub account and global git signing
 // config.
-func GetSignStatus() SignStatus {
+func GetSignStatus(ctx context.Context) SignStatus {
 	status := SignStatus{
 		GHInstalled: commandExists("gh"),
 		Name:        gitConfigGet("user.name"),
@@ -278,7 +276,7 @@ func GetSignStatus() SignStatus {
 	}
 
 	if status.GHInstalled {
-		acc, err := GetCurrentAccount()
+		acc, err := GetCurrentAccount(ctx)
 		if err != nil {
 			status.AccountErr = err
 		} else {

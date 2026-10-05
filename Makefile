@@ -34,7 +34,3 @@ build:
 .PHONY: install
 install:
 	@BIN_DIR=$(shell go env GOPATH)/bin $(MAKE) build
-
-.PHONY: generate
-generate: ## Generate code
-	@go generate ./...

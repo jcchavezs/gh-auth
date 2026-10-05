@@ -27,7 +27,7 @@ func valueOrNotSet(v string) string {
 
 func showSignStatus(cmd *cobra.Command) {
 	out := cmd.OutOrStdout()
-	status := gitauth.GetSignStatus()
+	status := gitauth.GetSignStatus(cmd.Context())
 
 	switch {
 	case !status.GHInstalled:

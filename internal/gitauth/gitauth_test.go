@@ -16,8 +16,8 @@ func TestCleanGPGKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CleanGPGKey(tt.in); got != tt.want {
-				t.Errorf("CleanGPGKey(%q) = %q, want %q", tt.in, got, tt.want)
+			if got := cleanGPGKey(tt.in); got != tt.want {
+				t.Errorf("cleanGPGKey(%q) = %q, want %q", tt.in, got, tt.want)
 			}
 		})
 	}

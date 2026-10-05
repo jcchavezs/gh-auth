@@ -11,7 +11,7 @@ func newSwitchCmd() *cobra.Command {
 		Short: "Switch GitHub account and configure Git",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := gitauth.SwitchAccount(); err != nil {
+			if err := gitauth.SwitchAccount(cmd.Context()); err != nil {
 				return err
 			}
 			return configureGitFromGitHub(cmd)

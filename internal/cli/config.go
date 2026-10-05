@@ -27,9 +27,10 @@ func prompt(cmd *cobra.Command, message string) (string, error) {
 // key (prompting the user when information is missing) and writes the global
 // git configuration.
 func configureGitFromGitHub(cmd *cobra.Command) error {
+	ctx := cmd.Context()
 	out := cmd.OutOrStdout()
 
-	account, err := gitauth.GetCurrentAccount()
+	account, err := gitauth.GetCurrentAccount(ctx)
 	if err != nil {
 		if errors.Is(err, gitauth.ErrGHNotInstalled) {
 			return err
@@ -39,10 +40,9 @@ func configureGitFromGitHub(cmd *cobra.Command) error {
 
 	username, email := account.Username, account.Email
 
-	if username == "" || email == "" {
-		fprintln(out, "Could not get complete account information")
+	if email == "" {
+		fprintln(out, "Could not get email from GitHub account")
 		fprintf(out, "Username: %s\n", username)
-		fprintf(out, "Email: %s\n", email)
 		fprintln(out)
 		manualEmail, err := prompt(cmd, "Enter email manually: ")
 		if err != nil {
@@ -51,12 +51,12 @@ func configureGitFromGitHub(cmd *cobra.Command) error {
 		email = manualEmail
 	}
 
-	gpgKey := gitauth.FindGPGKey(email)
+	gpgKey := gitauth.FindGPGKey(ctx, email)
 	if gpgKey == "" {
 		fprintf(out, "No GPG key found for %s\n", email)
 		fprintln(out)
 		fprintln(out, "Available GPG keys:")
-		fprintln(out, gitauth.ListSecretKeys())
+		fprintln(out, gitauth.ListSecretKeys(ctx))
 		fprintln(out)
 		manualKey, err := prompt(cmd, "Enter GPG key ID (or press Enter to skip): ")
 		if err != nil {
@@ -71,15 +71,12 @@ func configureGitFromGitHub(cmd *cobra.Command) error {
 	}
 
 	if result.GPGKey == "" {
-		fprintln(out, "GPG signing disabled")
+		fprintf(out, "%s✓%s Git identity updated: %s%s <%s>%s (no signing key)\n",
+			colorGreen, colorReset, colorGreen, result.Username, result.Email, colorReset)
+	} else {
+		fprintf(out, "%s✓%s Git identity updated: %s%s <%s>%s, GPG key %s\n",
+			colorGreen, colorReset, colorGreen, result.Username, result.Email, colorReset, result.GPGKey)
 	}
-
-	displayKey := result.GPGKey
-	if displayKey == "" {
-		displayKey = "None"
-	}
-	fprintf(out, "%s✓%s Global GPG Key updated to %s%s (%s)%s\n",
-		colorGreen, colorReset, bold, displayKey, result.Email, normal)
 
 	return nil
 }

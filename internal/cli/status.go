@@ -11,7 +11,7 @@ func newStatusCmd() *cobra.Command {
 		Short: "Show gh authentication status",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return gitauth.AuthStatus(cmd.OutOrStdout(), cmd.ErrOrStderr())
+			return gitauth.AuthStatus(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr())
 		},
 	}
 }
