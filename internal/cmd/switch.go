@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/jcchavezs/gh-auth/internal/cli"
+	"github.com/fatih/color"
 	"github.com/jcchavezs/gh-auth/internal/gitauth"
 	"github.com/spf13/cobra"
 )
@@ -39,12 +39,13 @@ func configureGitFromGitHub(cmd *cobra.Command) error {
 		return err
 	}
 
+	green := color.New(color.FgGreen).SprintFunc()
 	if result.GPGKey == "" {
-		_, _ = fmt.Fprintf(out, "%s✓%s Git identity updated: %s%s <%s>%s (no signing key)\n",
-			cli.ColorGreen, cli.ColorReset, cli.ColorGreen, result.Username, result.Email, cli.ColorReset)
+		_, _ = fmt.Fprintf(out, "%s Git identity updated: %s (no signing key)\n",
+			green("✓"), green(fmt.Sprintf("%s <%s>", result.Username, result.Email)))
 	} else {
-		_, _ = fmt.Fprintf(out, "%s✓%s Git identity updated: %s%s <%s>%s, GPG key %s\n",
-			cli.ColorGreen, cli.ColorReset, cli.ColorGreen, result.Username, result.Email, cli.ColorReset, result.GPGKey)
+		_, _ = fmt.Fprintf(out, "%s Git identity updated: %s, GPG key %s\n",
+			green("✓"), green(fmt.Sprintf("%s <%s>", result.Username, result.Email)), result.GPGKey)
 	}
 
 	return nil
