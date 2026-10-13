@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/jcchavezs/gh-auth/internal/cli"
+	"github.com/jcchavezs/gh-auth/internal/cmd"
 )
 
 func main() {
-	if err := cli.NewRootCmd().Execute(); err != nil {
+	if err := cmd.NewRootCmd().Execute(); err != nil {
 		os.Exit(1)
 	}
 }
