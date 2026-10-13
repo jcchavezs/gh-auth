@@ -1,4 +1,4 @@
-package cli
+package cmd
 
 import (
 	"github.com/jcchavezs/gh-auth/internal/gitauth"

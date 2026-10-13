@@ -1,6 +1,38 @@
 package gitauth
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
+
+func TestProfileConfigDir(t *testing.T) {
+	t.Run("uses XDG_CONFIG_HOME when set", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", "/tmp/xdg")
+
+		got, err := ProfileConfigDir("work")
+		if err != nil {
+			t.Fatalf("ProfileConfigDir returned error: %v", err)
+		}
+		want := filepath.Join("/tmp/xdg", "gh-auth", "work")
+		if got != want {
+			t.Errorf("ProfileConfigDir = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("falls back to HOME/.config", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", "")
+		t.Setenv("HOME", "/tmp/home")
+
+		got, err := ProfileConfigDir("work")
+		if err != nil {
+			t.Fatalf("ProfileConfigDir returned error: %v", err)
+		}
+		want := filepath.Join("/tmp/home", ".config", "gh-auth", "work")
+		if got != want {
+			t.Errorf("ProfileConfigDir = %q, want %q", got, want)
+		}
+	})
+}
 
 func TestCleanGPGKey(t *testing.T) {
 	tests := []struct {

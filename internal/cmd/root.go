@@ -1,5 +1,4 @@
-// Package cli wires up the gh-auth cobra command tree.
-package cli
+package cmd
 
 import (
 	"github.com/spf13/cobra"
@@ -7,14 +6,6 @@ import (
 
 // version is overridden at build time via -ldflags.
 var version = "dev"
-
-// ANSI escape codes used to match the original script's output styling.
-const (
-	colorGreen = "\033[0;32m"
-	colorReset = "\033[0m"
-	bold       = "\033[1m"
-	normal     = "\033[0m"
-)
 
 // NewRootCmd builds the root gh-auth command with all subcommands attached.
 func NewRootCmd() *cobra.Command {
@@ -24,7 +15,8 @@ func NewRootCmd() *cobra.Command {
 		Long:    "Authenticate gh and git with GitHub and configure git accordingly.",
 		Version: version,
 		Example: `  gh-auth switch
-  gh-auth sign-status`,
+  gh-auth sign-status
+  gh-auth shell work`,
 		SilenceUsage: true,
 	}
 
@@ -32,6 +24,7 @@ func NewRootCmd() *cobra.Command {
 		newSwitchCmd(),
 		newSignStatusCmd(),
 		newStatusCmd(),
+		newShellCmd(),
 	)
 
 	return root

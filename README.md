@@ -83,6 +83,23 @@ Passthrough to `gh auth status`.
 gh-auth status
 ```
 
+### `shell [profile]`
+
+Starts a new `$SHELL` with `GH_CONFIG_DIR` pointed at the profile's config
+directory, so `gh` (and anything that respects `GH_CONFIG_DIR`) uses an isolated
+configuration for the duration of that shell. The directory is resolved as:
+
+- `$XDG_CONFIG_HOME/gh-auth/<profile>` when `$XDG_CONFIG_HOME` is set,
+- `$AppData/gh-auth/<profile>` on Windows when `$AppData` is set, or
+- `$HOME/.config/gh-auth/<profile>` otherwise.
+
+When no profile is given, you are prompted for one. If the profile is left
+empty, or its directory does not yet exist, `gh auth login -c` runs instead.
+
+```bash
+gh-auth shell work
+```
+
 ## Development
 
 ```bash

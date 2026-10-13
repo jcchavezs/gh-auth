@@ -12,7 +12,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 )
 
@@ -164,7 +166,6 @@ func gitConfigGet(key string) string {
 	return strings.TrimSpace(string(out))
 }
 
-
 // ListSecretKeys returns a human-readable listing of available secret GPG keys,
 // limited to the sec/uid lines, matching the script's fallback output.
 func ListSecretKeys(ctx context.Context) string {
@@ -230,6 +231,48 @@ func ConfigureGit(username, email, gpgKey string) (ConfigResult, error) {
 	return ConfigResult{Username: username, Email: email, GPGKey: gpgKey}, nil
 }
 
+// ProfileConfigDir resolves the gh config directory for the given profile,
+// following the XDG/AppData/HOME conventions:
+//
+//	$XDG_CONFIG_HOME/gh-auth/<profile> (if $XDG_CONFIG_HOME is set),
+//	$AppData/gh-auth/<profile>         (on Windows if $AppData is set), or
+//	$HOME/.config/gh-auth/<profile>.
+func ProfileConfigDir(profile string) (string, error) {
+	var base string
+	switch {
+	case os.Getenv("XDG_CONFIG_HOME") != "":
+		base = os.Getenv("XDG_CONFIG_HOME")
+	case runtime.GOOS == "windows" && os.Getenv("AppData") != "":
+		base = os.Getenv("AppData")
+	default:
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("resolving home directory: %w", err)
+		}
+		base = filepath.Join(home, ".config")
+	}
+
+	return filepath.Join(base, "gh-auth", profile), nil
+}
+
+// AuthLogin runs `gh auth login -c`, forwarding the current process stdio so
+// the login flow is interactive.
+func AuthLogin(ctx context.Context, configDir string) error {
+	if os.Getenv("GHAUTH_PROFILE") != "" {
+		return errors.New("profile is already enabled")
+	}
+
+	if !commandExists("gh") {
+		return ErrGHNotInstalled
+	}
+	cmd := exec.CommandContext(ctx, "gh", "auth", "login")
+	cmd.Env = append(os.Environ(), "GH_CONFIG_DIR="+configDir)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 // SwitchAccount runs `gh auth switch`, which shows gh's interactive menu.
 func SwitchAccount(ctx context.Context) error {
 	if !commandExists("gh") {
@@ -269,10 +312,24 @@ type SignStatus struct {
 func GetSignStatus(ctx context.Context) SignStatus {
 	status := SignStatus{
 		GHInstalled: commandExists("gh"),
-		Name:        gitConfigGet("user.name"),
-		Email:       gitConfigGet("user.email"),
-		SigningKey:  gitConfigGet("user.signingkey"),
-		GPGSign:     gitConfigGet("commit.gpgsign"),
+	}
+
+	// Inside an active profile the git identity lives in the profile's cached
+	// gitconfig.json rather than the global git config.
+	if profile := os.Getenv("GHAUTH_PROFILE"); profile != "" {
+		if configDir, err := ProfileConfigDir(profile); err == nil {
+			if cfg, found, err := ReadProfileGitConfig(configDir); err == nil && found {
+				status.Name = cfg.Name
+				status.Email = cfg.Email
+				status.SigningKey = cfg.SigningKey
+				status.GPGSign = cfg.GPGSign
+			}
+		}
+	} else {
+		status.Name = gitConfigGet("user.name")
+		status.Email = gitConfigGet("user.email")
+		status.SigningKey = gitConfigGet("user.signingkey")
+		status.GPGSign = gitConfigGet("commit.gpgsign")
 	}
 
 	if status.GHInstalled {
