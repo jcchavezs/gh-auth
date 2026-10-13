@@ -3,10 +3,12 @@ package shell
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 
+	"github.com/fatih/color"
 	"github.com/jcchavezs/gh-auth/internal/gitauth"
 )
 
@@ -80,6 +82,16 @@ func RunShell(ctx context.Context, profile string, refreshProfile bool, out io.W
 			"GIT_CONFIG_VALUE_1=true",
 		)
 	}
+
+	// Write a message indicating the shell is starting and the profile being used as well as the name, email and signing key.
+	bold := color.New(color.Bold).SprintFunc()
+	_, _ = fmt.Fprintf(out, "Starting shell with profile %s.\n\n", bold(profile))
+	_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git author/committer name: "), username)
+	_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git author/committer email: "), email)
+	if gpgKey != "" {
+		_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git signing key: "), gpgKey)
+	}
+
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

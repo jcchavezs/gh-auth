@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/jcchavezs/gh-auth/internal/cli"
+	"github.com/fatih/color"
 	"github.com/jcchavezs/gh-auth/internal/gitauth"
 	"github.com/spf13/cobra"
 )
@@ -32,18 +32,21 @@ func showSignStatus(cmd *cobra.Command) {
 	out := cmd.OutOrStdout()
 	status := gitauth.GetSignStatus(cmd.Context())
 
+	green := color.New(color.FgGreen).SprintFunc()
+	bold := color.New(color.Bold).SprintFunc()
+
 	switch {
 	case !status.GHInstalled:
 		_, _ = fmt.Fprintln(out, "GitHub CLI not installed")
 	case status.Account != nil:
-		_, _ = fmt.Fprintf(out, "%s✓%s Active GitHub account: %s%s <%s>%s\n",
-			cli.ColorGreen, cli.ColorReset, cli.Bold, status.Account.Username, status.Account.Email, cli.ColorReset)
+		_, _ = fmt.Fprintf(out, "%s Active GitHub account: %s\n",
+			green("✓"), bold(fmt.Sprintf("%s <%s>", status.Account.Username, status.Account.Email)))
 	default:
 		_, _ = fmt.Fprintln(out, "No active GitHub account or GitHub CLI not authenticated")
 	}
 
-	_, _ = fmt.Fprintf(out, "- Name: %s%s%s\n", cli.Bold, valueOrNotSet(status.Name), cli.ColorReset)
-	_, _ = fmt.Fprintf(out, "- Email: %s%s%s\n", cli.Bold, valueOrNotSet(status.Email), cli.ColorReset)
-	_, _ = fmt.Fprintf(out, "- GPG Key: %s%s%s\n", cli.Bold, valueOrNotSet(status.SigningKey), cli.ColorReset)
-	_, _ = fmt.Fprintf(out, "- GPG Signing: %s%s%s\n", cli.Bold, valueOrNotSet(status.GPGSign), cli.ColorReset)
+	_, _ = fmt.Fprintf(out, "- Name: %s\n", bold(valueOrNotSet(status.Name)))
+	_, _ = fmt.Fprintf(out, "- Email: %s\n", bold(valueOrNotSet(status.Email)))
+	_, _ = fmt.Fprintf(out, "- GPG Key: %s\n", bold(valueOrNotSet(status.SigningKey)))
+	_, _ = fmt.Fprintf(out, "- GPG Signing: %s\n", bold(valueOrNotSet(status.GPGSign)))
 }
