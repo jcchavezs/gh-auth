@@ -34,3 +34,8 @@ build:
 .PHONY: install
 install:
 	@BIN_DIR=$(shell go env GOPATH)/bin $(MAKE) build
+
+.PHONY: modules
+modules:
+	@go mod tidy
+	@go mod vendor
