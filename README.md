@@ -2,7 +2,7 @@
 
 A small CLI that keeps your local **git** identity in sync with the GitHub
 account you are currently authenticated as through the [GitHub CLI](https://cli.github.com/)
-(`gh`), including GPG commit signing.
+(`gh`), **including GPG commit signing**.
 
 When you work with more than one GitHub account, it is easy to switch `gh`
 accounts but forget to update `git config` — so commits end up authored by (or
