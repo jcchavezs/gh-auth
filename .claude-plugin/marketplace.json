@@ -1,0 +1,12 @@
+{
+  "name": "gh-auth",
+  "description": "Claude Code plugins for the gh-auth CLI.",
+  "owner": { "name": "jcchavezs", "url": "https://github.com/jcchavezs" },
+  "plugins": [
+    {
+      "name": "gh-auth",
+      "source": "./",
+      "description": "Run gh, git and other commands under a specific gh-auth profile (GitHub account)."
+    }
+  ]
+}

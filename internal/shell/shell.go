@@ -23,14 +23,23 @@ var ErrShellNotSet = errors.New("$SHELL is not set")
 // GitHub and cached for subsequent shells. When the profile has a signing key,
 // commit signing is forced through GIT_CONFIG_* so it applies to every git
 // invocation regardless of how global options are ordered on the command line.
-func RunShell(ctx context.Context, profile string, refreshProfile bool, out io.Writer, in io.Reader) error {
+//
+// When command is non-empty it is run instead of an interactive shell and the
+// informational banner is skipped so the command's output stays clean.
+func RunShell(ctx context.Context, profile string, refreshProfile bool, command []string, out io.Writer, in io.Reader) error {
 	if os.Getenv("GHAUTH_PROFILE") != "" {
 		return errors.New("profile is already enabled")
 	}
 
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		return ErrShellNotSet
+	var name string
+	var cmdArgs []string
+	if len(command) > 0 {
+		name, cmdArgs = command[0], command[1:]
+	} else {
+		name = os.Getenv("SHELL")
+		if name == "" {
+			return ErrShellNotSet
+		}
 	}
 
 	configDir, err := gitauth.ProfileConfigDir(profile)
@@ -62,7 +71,7 @@ func RunShell(ctx context.Context, profile string, refreshProfile bool, out io.W
 		username, email, gpgKey = account.Name, account.Email, account.SigningKey
 	}
 
-	cmd := exec.CommandContext(ctx, shell)
+	cmd := exec.CommandContext(ctx, name, cmdArgs...)
 	cmd.Env = append(os.Environ(),
 		"GH_CONFIG_DIR="+configDir,
 		"GHAUTH_PROFILE="+profile,
@@ -83,13 +92,15 @@ func RunShell(ctx context.Context, profile string, refreshProfile bool, out io.W
 		)
 	}
 
-	// Write a message indicating the shell is starting and the profile being used as well as the name, email and signing key.
-	bold := color.New(color.Bold).SprintFunc()
-	_, _ = fmt.Fprintf(out, "Starting shell with profile %s.\n\n", bold(profile))
-	_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git author/committer name: "), username)
-	_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git author/committer email: "), email)
-	if gpgKey != "" {
-		_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git signing key: "), gpgKey)
+	if len(command) == 0 {
+		// Write a message indicating the shell is starting and the profile being used as well as the name, email and signing key.
+		bold := color.New(color.Bold).SprintFunc()
+		_, _ = fmt.Fprintf(out, "Starting shell with profile %s.\n\n", bold(profile))
+		_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git author/committer name: "), username)
+		_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git author/committer email: "), email)
+		if gpgKey != "" {
+			_, _ = fmt.Fprintf(out, "%s%s\n", bold("Git signing key: "), gpgKey)
+		}
 	}
 
 	cmd.Stdin = os.Stdin

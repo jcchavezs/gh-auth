@@ -83,7 +83,7 @@ Passthrough to `gh auth status`.
 gh-auth status
 ```
 
-### `shell [profile]`
+### `shell [profile] [-- command [args...]]`
 
 Starts a new `$SHELL` with `GH_CONFIG_DIR` pointed at the profile's config
 directory, so `gh` (and anything that respects `GH_CONFIG_DIR`) uses an isolated
@@ -98,6 +98,13 @@ empty, or its directory does not yet exist, `gh auth login -c` runs instead.
 
 ```bash
 gh-auth shell work
+```
+
+To run a single command with the profile applied instead of an interactive
+shell, pass it after `--`. The command's exit status is propagated:
+
+```bash
+gh-auth shell work -- git commit -m "message"
 ```
 
 ## Development
