@@ -33,6 +33,18 @@ prompted to enter one or to skip signing.
 
 ## Installation
 
+### Using the install script (recommended)
+
+Requires the [GitHub CLI](https://cli.github.com). Installs the latest release
+for your OS/arch into `/usr/local/bin` (or `~/.local/bin`); override with
+`INSTALL_DIR` or `VERSION`.
+
+```bash
+gh release download --repo jcchavezs/gh-auth --pattern 'install.sh' -O - | sh
+```
+
+### From source
+
 Install into your `$GOPATH/bin`:
 
 ```bash

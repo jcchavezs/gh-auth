@@ -27,6 +27,10 @@ gh-auth shell <profile> -- git push
 
 ## Steps
 
+0. Check that the CLI is installed with `command -v gh-auth`. If it is missing, ask the user whether to install it
+   (do not install without their confirmation). If they agree, run
+   `gh release download --repo jcchavezs/gh-auth --pattern 'install.sh' -O - | sh` (requires `gh`; honors `INSTALL_DIR`
+   and `VERSION`). Then re-check `command -v gh-auth`, and if the install dir is not in `PATH`, tell the user how to add it.
 1. Get the profile name from the user (profiles live in `~/.config/gh-auth/<profile>`; `ls` that directory to list them).
 2. Prefix each gh/git command that needs that identity with `gh-auth shell <profile> --`.
 3. Never commit or push unless the user asked for it.
