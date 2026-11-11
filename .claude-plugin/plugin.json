@@ -1,0 +1,11 @@
+{
+  "name": "gh-auth",
+  "description": "Run gh, git and other commands under a specific gh-auth profile (GitHub account).",
+  "version": "0.1.0",
+  "author": { "name": "jcchavezs", "url": "https://github.com/jcchavezs" },
+  "homepage": "https://github.com/jcchavezs/gh-auth",
+  "repository": "https://github.com/jcchavezs/gh-auth",
+  "license": "Apache-2.0",
+  "keywords": ["gh-auth", "github", "cli", "gh", "git"],
+  "skills": "./.claude/skills"
+}

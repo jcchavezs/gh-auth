@@ -32,14 +32,28 @@ func newShellCmd() *cobra.Command {
 	var refreshProfile bool
 
 	cmd := &cobra.Command{
-		Use:   "shell [profile]",
-		Short: "Start a shell with gh pointed at a profile's config directory",
+		Use:   "shell [profile] [-- command [args...]]",
+		Short: "Start a shell (or run a command) with gh pointed at a profile's config directory",
 		Long: `Start a shell with GH_CONFIG_DIR pointed at the specified profile's config directory, allowing you to work with multiple GitHub profiles seamlessly.
+
+If a command is given after "--", it is run instead of an interactive shell,
+e.g. gh-auth shell work -- git commit -m "msg".
 
 Based on https://github.com/cli/cli/issues/12145
 `,
-		Args: cobra.MaximumNArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if dash := cmd.ArgsLenAtDash(); dash >= 0 {
+				args = args[:dash]
+			}
+			return cobra.MaximumNArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var command []string
+			if dash := cmd.ArgsLenAtDash(); dash >= 0 {
+				command = args[dash:]
+				args = args[:dash]
+			}
+
 			var profile string
 			if len(args) == 1 {
 				profile = args[0]
@@ -71,7 +85,7 @@ Based on https://github.com/cli/cli/issues/12145
 				}
 			}
 
-			return shell.RunShell(cmd.Context(), profile, refreshProfile, cmd.OutOrStdout(), cmd.InOrStdin())
+			return shell.RunShell(cmd.Context(), profile, refreshProfile, command, cmd.OutOrStdout(), cmd.InOrStdin())
 		},
 	}
 
