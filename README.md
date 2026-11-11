@@ -1,4 +1,4 @@
-`# gh-auth
+# gh-auth
 
 A small CLI that keeps your local **git** identity in sync with the GitHub
 account you are currently authenticated as through the [GitHub CLI](https://cli.github.com/)
