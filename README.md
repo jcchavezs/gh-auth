@@ -1,4 +1,4 @@
-# gh-auth
+`# gh-auth
 
 A small CLI that keeps your local **git** identity in sync with the GitHub
 account you are currently authenticated as through the [GitHub CLI](https://cli.github.com/)
@@ -118,6 +118,31 @@ shell, pass it after `--`. The command's exit status is propagated:
 ```bash
 gh-auth shell work -- git commit -m "message"
 ```
+
+## Claude Code plugin
+
+This repository is also a [Claude Code](https://claude.com/claude-code) plugin
+marketplace. It ships the `switching-gh-auth-profile` skill, which lets Claude
+run `gh`, `git` and other commands under a specific `gh-auth` profile (e.g.
+"commit with the work profile"). The `gh-auth` binary must be installed (see
+[Installation](#installation)).
+
+From within Claude Code, add the marketplace and install the plugin:
+
+```text
+/plugin marketplace add jcchavezs/gh-auth
+/plugin install gh-auth@gh-auth
+```
+
+Or from your terminal:
+
+```bash
+claude plugin marketplace add jcchavezs/gh-auth
+claude plugin install gh-auth@gh-auth
+```
+
+To try it from a local checkout, use the path instead:
+`/plugin marketplace add /path/to/gh-auth`.
 
 ## Development
 
